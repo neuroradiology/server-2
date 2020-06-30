@@ -916,12 +916,8 @@ class OC_App {
 		self::registerAutoloading($appId, $appPath, true);
 		self::executeRepairSteps($appId, $appData['repair-steps']['pre-migration']);
 
-		if (file_exists($appPath . '/appinfo/database.xml')) {
-			OC_DB::updateDbFromStructure($appPath . '/appinfo/database.xml');
-		} else {
-			$ms = new MigrationService($appId, \OC::$server->getDatabaseConnection());
-			$ms->migrate();
-		}
+		$ms = new MigrationService($appId, \OC::$server->getDatabaseConnection());
+		$ms->migrate();
 
 		self::executeRepairSteps($appId, $appData['repair-steps']['post-migration']);
 		self::setupLiveMigrations($appId, $appData['repair-steps']['live-migration']);
