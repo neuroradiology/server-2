@@ -45,7 +45,6 @@ use OC\App\AppStore\Fetcher\AppFetcher;
 use OC\Archive\TAR;
 use OC\DB\MigrationService;
 use OC_App;
-use OC_DB;
 use OC_Helper;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
