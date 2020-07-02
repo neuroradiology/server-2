@@ -350,7 +350,7 @@ class Trashbin {
 					self::copy_recursive($owner . '/files_versions/' . $ownerPath, $owner . '/files_trashbin/versions/' . basename($ownerPath) . '.d' . $timestamp, $rootView);
 				}
 				self::move($rootView, $owner . '/files_versions/' . $ownerPath, $user . '/files_trashbin/versions/' . $filename . '.d' . $timestamp);
-			} elseif ($versions = \OCA\Files_Versions\Storage::getVersions($owner, $ownerPath)) {
+			} else if ($versions = \OCA\Files_Versions\Storage::getVersions($owner, $ownerPath)) {
 				foreach ($versions as $v) {
 					if ($owner !== $user) {
 						self::copy($rootView, $owner . '/files_versions' . $v['path'] . '.v' . $v['version'], $owner . '/files_trashbin/versions/' . $v['name'] . '.v' . $v['version'] . '.d' . $timestamp);
@@ -506,7 +506,7 @@ class Trashbin {
 
 			if ($view->is_dir('/files_trashbin/versions/' . $file)) {
 				$rootView->rename(Filesystem::normalizePath($user . '/files_trashbin/versions/' . $file), Filesystem::normalizePath($owner . '/files_versions/' . $ownerPath));
-			} elseif ($versions = self::getVersionsFromTrash($versionedFile, $timestamp, $user)) {
+			} else if ($versions = self::getVersionsFromTrash($versionedFile, $timestamp, $user)) {
 				foreach ($versions as $v) {
 					if ($timestamp) {
 						$rootView->rename($user . '/files_trashbin/versions/' . $versionedFile . '.v' . $v . '.d' . $timestamp, $owner . '/files_versions/' . $ownerPath . '.v' . $v);
@@ -569,6 +569,7 @@ class Trashbin {
 
 	/**
 	 * wrapper function to emit the 'preDelete' hook of \OCP\Trashbin before a file is deleted
+	 *
 	 * @param string $path
 	 */
 	protected static function emitTrashbinPreDelete($path) {
@@ -577,6 +578,7 @@ class Trashbin {
 
 	/**
 	 * wrapper function to emit the 'delete' hook of \OCP\Trashbin after a file has been deleted
+	 *
 	 * @param string $path
 	 */
 	protected static function emitTrashbinPostDelete($path) {
@@ -615,7 +617,7 @@ class Trashbin {
 
 		if ($node instanceof Folder) {
 			$size += self::calculateSize(new View('/' . $user . '/files_trashbin/files/' . $file));
-		} elseif ($node instanceof File) {
+		} else if ($node instanceof File) {
 			$size += $view->filesize('/files_trashbin/files/' . $file);
 		}
 
@@ -640,7 +642,7 @@ class Trashbin {
 			if ($view->is_dir('files_trashbin/versions/' . $file)) {
 				$size += self::calculateSize(new View('/' . $user . '/files_trashbin/versions/' . $file));
 				$view->unlink('files_trashbin/versions/' . $file);
-			} elseif ($versions = self::getVersionsFromTrash($filename, $timestamp, $user)) {
+			} else if ($versions = self::getVersionsFromTrash($filename, $timestamp, $user)) {
 				foreach ($versions as $v) {
 					if ($timestamp) {
 						$size += $view->filesize('/files_trashbin/versions/' . $filename . '.v' . $v . '.d' . $timestamp);
@@ -693,6 +695,14 @@ class Trashbin {
 	 * @return int available free space for trash bin
 	 */
 	private static function calculateFreeSpace($trashbinSize, $user) {
+		$config = \OC::$server->getConfig();
+		$systemTrashbinSize = (int)$config->getAppValue('files_trashbin', 'trashbin_size', '-1');
+		$userTrashbinSize = (int)$config->getUserValue($user, 'files_trashbin', 'trashbin_size', '-1');
+		$configuredTrashbinSize = ($userTrashbinSize < 0) ? $systemTrashbinSize : $userTrashbinSize;
+		if ($configuredTrashbinSize) {
+			return $configuredTrashbinSize - $trashbinSize;
+		}
+
 		$softQuota = true;
 		$userObject = \OC::$server->getUserManager()->get($user);
 		if (is_null($userObject)) {
